@@ -1,0 +1,29 @@
+{
+  "name": "zapret-2.0",
+  "version": "2.0.0",
+  "description": "ZAPRET 2.0 - GUI with Discord & Liquid Glass styling, Real-Time Connection Monitoring, Smart Auto-Optimizer, OTA updates, and System Tray",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:admin": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process node_modules\\electron\\dist\\electron.exe -ArgumentList . -Verb RunAs\"",
+    "dev": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "zapret",
+    "discord",
+    "youtube",
+    "bypass",
+    "dpi",
+    "liquid-glass",
+    "electron"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "isomorphic-git": "^1.44.10"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0"
+  }
+}
