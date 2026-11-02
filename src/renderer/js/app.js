@@ -364,10 +364,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (elements.btnRelaunchAdmin) {
     elements.btnRelaunchAdmin.addEventListener('click', async () => {
       try {
-        showToast('Запрос прав Администратора (Windows UAC)...', 'info');
+        elements.btnRelaunchAdmin.disabled = true;
+        elements.btnRelaunchAdmin.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Запрос прав Windows UAC...</span>
+        `;
+        showToast('Запрос прав Администратора (подтвердите запрос UAC)...', 'info');
         await window.zapretAPI.relaunchElevated();
       } catch (e) {
         showToast(`Ошибка перезапуска: ${e.message}`, 'error');
+        elements.btnRelaunchAdmin.disabled = false;
+        elements.btnRelaunchAdmin.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Перезапустить от Администратора</span>
+        `;
       }
     });
   }

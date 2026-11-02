@@ -179,26 +179,47 @@ function createWindow() {
 }
 
 function relaunchElevated() {
-  const { exec } = require('child_process');
+  const { spawn } = require('child_process');
   const electronExe = path.resolve(process.execPath);
   const workDir = path.dirname(electronExe);
+  const currentPid = process.pid;
 
-  let cmd = '';
-  if (app.isPackaged) {
-    cmd = `Start-Process -FilePath '${electronExe}' -WorkingDirectory '${workDir}' -WindowStyle Hidden -Verb RunAs`;
-  } else {
-    const appPath = path.resolve(app.getAppPath());
-    cmd = `Start-Process -FilePath '${electronExe}' -ArgumentList '${appPath}' -WorkingDirectory '${workDir}' -WindowStyle Hidden -Verb RunAs`;
+  const isDev = path.basename(electronExe).toLowerCase() === 'electron.exe';
+  let argString = '';
+  if (isDev) {
+    const appPath = path.resolve(app.getAppPath()).replace(/'/g, "''");
+    argString = `-ArgumentList '${appPath}'`;
   }
 
-  exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${cmd}"`, { windowsHide: true }, (err) => {
-    if (!err) {
-      setTimeout(() => {
-        isQuitting = true;
-        app.exit(0);
-      }, 500);
-    }
-  });
+  // Release the single instance lock immediately so the new process will never conflict
+  try {
+    app.releaseSingleInstanceLock();
+  } catch (e) {}
+
+  // Construct PowerShell command: wait for the old PID to close, then launch elevated
+  const psCmd = `Wait-Process -Id ${currentPid} -Timeout 5 -ErrorAction SilentlyContinue; Start-Process -FilePath '${electronExe.replace(/'/g, "''")}' ${argString} -WorkingDirectory '${workDir.replace(/'/g, "''")}' -Verb RunAs`;
+
+  // Spawn detached process that continues running even after this app exits
+  try {
+    const child = spawn('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-Command', psCmd
+    ], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true
+    });
+    child.unref();
+  } catch (err) {
+    console.error('Failed to spawn elevated relauncher:', err);
+  }
+
+  // Gracefully quit
+  isQuitting = true;
+  setTimeout(() => {
+    app.exit(0);
+  }, 150);
 }
 
 function updateTrayMenu() {
